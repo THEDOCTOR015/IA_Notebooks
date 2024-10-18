@@ -1,3 +1,6 @@
 
 *.csv
 /stable-diffusion-face-dataset
+
+/train2014
+/annotations_trainval2014
