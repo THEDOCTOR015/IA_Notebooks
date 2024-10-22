@@ -5,3 +5,5 @@
 /train2014
 /annotations_trainval2014
 /logs
+*.keras
+*.h5
