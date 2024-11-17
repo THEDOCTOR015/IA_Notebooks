@@ -1,6 +1,7 @@
 
 *.csv
 /stable-diffusion-face-dataset
+/MNIST
 
 /train2014
 /annotations_trainval2014
