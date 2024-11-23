@@ -3,9 +3,11 @@
 /stable-diffusion-face-dataset
 /MNIST
 /Humans_Face
-
+/celeba
 /train2014
 /annotations_trainval2014
 /logs
 *.keras
 *.h5
+models/*/
+__pycache__/
