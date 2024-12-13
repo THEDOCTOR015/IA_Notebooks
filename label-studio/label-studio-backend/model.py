@@ -6,8 +6,8 @@ import numpy as np
 from tensorflow.keras.models import load_model
 
 
-UNLABELED_IMAGES_FOLDER = "/data/unlabeled"  
-OUTPUT_LABELS_FOLDER = "/data/labels"
+UNLABELED_IMAGES_FOLDER = "/data/unlabeled/"  
+OUTPUT_LABELS_FOLDER = "/data/labels/"
 MODEL_FOLDER = "/models/"
 
 class YOLO(LabelStudioMLBase):
@@ -15,7 +15,7 @@ class YOLO(LabelStudioMLBase):
         super(YOLO, self).__init__(**kwargs)
         
         # Localiser et charger le fichier du modèle YOLO
-        model_files = glob.glob(os.path.join(MODEL_FOLDER, "*_yolo.keras"))
+        model_files = glob.glob(os.path.join(MODEL_FOLDER, "yolo_*.keras"))
         if not model_files:
             raise FileNotFoundError("Aucun modèle YOLO trouvé dans le dossier spécifié.")
         
