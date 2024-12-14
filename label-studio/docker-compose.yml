@@ -7,9 +7,9 @@ services:
     volumes:
       - ./data:/data
     environment:
-      - LABEL_STUDIO_HOST=http://0.0.0.0:8080
+      - LABEL_STUDIO_HOST=http://localhost:8080
       - LABEL_STUDIO_STORAGE=/data
-    restart: always
+    restart: no
 
   ml-backend:
     build:
@@ -17,6 +17,10 @@ services:
     container_name: label-studio-ml-backend
     ports:
       - "9090:9090"
+      - "5000:5000"
     volumes:
       - ./data:/data
-    restart: always
+      - python_libraries:/usr/local/lib/python3.9/site-packages
+    restart: no
+volumes:
+  python_libraries:

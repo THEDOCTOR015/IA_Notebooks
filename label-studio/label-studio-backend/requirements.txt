@@ -2,3 +2,6 @@ label-studio-ml
 tensorflow 
 pillow
 numpy
+redis
+rq
+Flask

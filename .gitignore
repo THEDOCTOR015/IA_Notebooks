@@ -12,3 +12,5 @@
 models/*/
 __pycache__/
 datasets/*/
+label-studio/data/labels/*
+label-studio/data/unlabeled/*

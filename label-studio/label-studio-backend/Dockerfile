@@ -8,4 +8,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "model.py"]
+RUN chmod +x /app/start.sh
+CMD ["/app/start.sh"]
