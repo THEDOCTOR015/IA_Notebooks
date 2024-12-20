@@ -9,10 +9,52 @@ import requests
 from io import BytesIO
 from tensorflow.keras.models import load_model
 import tensorflow as tf
+import importlib.util
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
+def load_model_and_config(model_base_folder):
+    """
+    Charge un modèle Keras et ses paramètres de configuration associés.
+
+    Arguments :
+        model_base_folder (str) : Le dossier contenant les modèles "yolo_MM_DD" avec leurs configs.
+
+    Retourne :
+        model (tensorflow.keras.Model) : Le modèle Keras chargé.
+        config (module) : Un objet contenant les paramètres de configuration.
+    """
+    # Rechercher les dossiers "yolo_MM_DD" dans le dossier de base
+    model_folders = glob.glob(os.path.join(model_base_folder, "yolo_*"))
+    if not model_folders:
+        raise FileNotFoundError("Aucun dossier de modèle 'yolo_MM_DD' trouvé.")
+    
+    # Trier pour choisir le dernier modèle en date
+    latest_model_folder = max(model_folders, key=os.path.getctime)
+    print(f"Modèle sélectionné : {latest_model_folder}", flush=True)
+    
+    # Charger le fichier de configuration (config.py) en tant que module dynamique
+    config_path = os.path.join(latest_model_folder, "config.py")
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Fichier de configuration non trouvé : {config_path}")
+    
+    spec = importlib.util.spec_from_file_location("config", config_path)
+    config = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config)
+    
+    # Charger le modèle Keras
+    model_path = os.path.join(latest_model_folder, "yolo_*.h5")
+    model_files = glob.glob(model_path)
+    if not model_files:
+        raise FileNotFoundError(f"Aucun fichier modèle '.h5' trouvé dans : {latest_model_folder}")
+    
+    model_file = model_files[0]
+    print(f"Chargement du modèle : {model_file}", flush=True)
+    model = load_model(model_file)
+    
+    return model, config
+
+
 class YOLO(LabelStudioMLBase):
-    model = None  # Attribut de classe, partagé entre toutes les instances
 
     @tf.function
     def optimized_predict(model, image):
@@ -20,18 +62,6 @@ class YOLO(LabelStudioMLBase):
 
     def __init__(self, **kwargs):
         super(YOLO, self).__init__(**kwargs)
-        
-        if YOLO.model is None:  # Vérifie si le modèle est déjà chargé
-            print(f'Chargement du modèle YOLO en cours', flush=True)
-            # Localiser et charger le fichier du modèle YOLO
-            model_files = glob.glob(os.path.join(MODEL_FOLDER, "yolo_*"))
-            if not model_files:
-                raise FileNotFoundError("Aucun modèle YOLO trouvé dans le dossier spécifié.")
-            
-            # Prendre le modèle avec la date la plus récente
-            latest_model = max(model_files, key=os.path.getctime)
-            print(f"Chargement du modèle : {latest_model}")
-            YOLO.model = load_model(latest_model)
 
     def _download_and_preprocess_image(self,image_url):
         
@@ -53,7 +83,6 @@ class YOLO(LabelStudioMLBase):
             return 1/(1+np.exp(-x))
         boxes = []
         pred = pred[0] # Enlever le batch
-        print('pref.shape :', pred.shape, flush=True)
         pred_boxes=pred[..., 0:4]
         pred_conf=tf.sigmoid(pred[..., 4])
         for i in range(MODEL_CELLULES[0]):
@@ -128,20 +157,21 @@ class YOLO(LabelStudioMLBase):
 if __name__ == "__main__":
     UNLABELED_IMAGES_FOLDER = "/data/unlabeled/"  
     OUTPUT_LABELS_FOLDER = "/data/labels/"
-    MODEL_FOLDER = "/app/"
-
-    MODEL_CELLULES = (18,32) # Number of cells heigth, width (line,column)
-    IMAGE_SIZE = (576, 1024) # Heigth, Width
-
-    MODEL_ANCHOR_BOXES = [(7.771702728797546, 11.099425402414909), (16.233133106872444, 4.676295486695418), (26.65295286429116, 2.322343759539281), (9.476821452651933, 3.7753047321480744), (3.642066698646129, 5.355965495956248), (5.794567115957937, 2.5241804259133427), (3.5527940911190563, 2.2905150829398315), (1.7457785313564547, 2.229531520410109), (1.2712882556016014, 1.0891510755676512)] # Heigth, Width with k=9 in k-means
-    MODEL_CELLULES_SIZE = (IMAGE_SIZE[0]/MODEL_CELLULES[0], IMAGE_SIZE[1]/MODEL_CELLULES[1]) # Taille d'une cellule en pixels
-    THRESHOLD_CONFIDENCE = 0.7 # Seuil de confiance pour la détection d'objet
-    MODEL_MINIMAL_IOU = 0.5 # Seuil minimal d'IOU pour considérer une détection comme correcte
-    MODEL_GRID_SENSIBILITY_COEF = 1.2 # Coefficient d'extension de la sigmoid pour x,y
-    MODEL_SIGMOID_MULTIPLIER = 1 # Multiplicateur de la sigmoid pour w,h
-    MODEL_SIGMOID_ADDER = 0.5 # Ajout à la sigmoid pour w,h
-    
+    MODEL_FOLDER = "/app/models/"
     LABEL_STUDIO_BASEURL = 'http://label-studio:8080'
+    # Setup model
+    model, config = load_model_and_config(MODEL_FOLDER)
+    # Paramètres du modèle
+    MODEL_ANCHOR_BOXES = config.MODEL_ANCHOR_BOXES
+    MODEL_CELLULES = config.MODEL_CELLULES
+    IMAGE_SIZE = config.IMAGE_SIZE
+    MODEL_CELLULES_SIZE = config.MODEL_CELLULES_SIZE
+    THRESHOLD_CONFIDENCE = config.THRESHOLD_CONFIDENCE
+    MODEL_MINIMAL_IOU = config.MODEL_MINIMAL_IOU
+    MODEL_GRID_SENSIBILITY_COEF = config.MODEL_GRID_SENSIBILITY_COEF
+    MODEL_SIGMOID_MULTIPLIER = config.MODEL_SIGMOID_MULTIPLIER
+    MODEL_SIGMOID_ADDER = config.MODEL_SIGMOID_ADDER
+    YOLO.model = model
     API_KEY = os.getenv('LABEL_STUDIO_API_KEY')
     print(f'ML Backend | Clé API : {API_KEY}', flush=True)
     app = init_app(YOLO)
