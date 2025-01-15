@@ -3,3 +3,4 @@ __pycache__/
 datasets/*/
 label-studio/label-studio-backend/models/*
 .vscode/
+*.csv
