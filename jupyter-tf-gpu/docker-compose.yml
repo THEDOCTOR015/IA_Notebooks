@@ -1,0 +1,19 @@
+services:
+  jupyter:
+    build:
+      context: .
+      args:
+        JUPYTER_PLAIN_PASSWORD: ${JUPYTER_PLAIN_PASSWORD}
+    container_name: jupyter_tf_gpu
+    restart: always
+    environment:
+      - JUPYTER_TOKEN=
+    volumes:
+      - python_libs:/usr/local/lib/
+    ports:
+      - "8888:8888"
+    runtime: nvidia
+  
+
+volumes:
+  python_libs:

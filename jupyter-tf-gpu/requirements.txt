@@ -1,0 +1,6 @@
+tensorflow[and-cuda]
+matplotlib
+pandas
+scikit-learn
+seaborn
+scipy
