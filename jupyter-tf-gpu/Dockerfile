@@ -1,4 +1,5 @@
 FROM tensorflow/tensorflow:latest-gpu-jupyter
+WORKDIR /workspace
 # Copier les dépendances
 COPY requirements.txt .
 
