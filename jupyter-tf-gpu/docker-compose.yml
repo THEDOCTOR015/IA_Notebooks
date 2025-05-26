@@ -9,7 +9,7 @@ services:
     environment:
       - JUPYTER_TOKEN=
     volumes:
-      - ..:/workspace
+      - ..:/tf
       - python_libs:/usr/local/lib/
     ports:
       - "8888:8888"

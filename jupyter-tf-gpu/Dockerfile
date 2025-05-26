@@ -1,5 +1,5 @@
 FROM tensorflow/tensorflow:latest-gpu-jupyter
-WORKDIR /workspace
+WORKDIR /tf
 # Copier les dépendances
 COPY requirements.txt .
 
@@ -9,6 +9,9 @@ RUN pip install --upgrade pip && \
 
 # Génère le mot de passe Jupyter (argon2) à partir de la variable ARG
 ARG JUPYTER_PLAIN_PASSWORD=admin
+
+# Installer les dépendances système nécessaires pour CV2
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 
 # Installer Jupyter Server et configurer le mot de passe
 RUN pip install jupyter_server && \
